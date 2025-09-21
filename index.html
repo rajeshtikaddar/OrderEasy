@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OrderEasy - Digital Menu</title>
+  <style>
+    body {
+      margin: 0;
+      background: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1600&q=80') no-repeat center center fixed;
+      background-size: cover;
+      color: #333;
+      font-family: Arial, sans-serif;
+      overflow-x: hidden;
+    }
+
+    header {
+      height: 80px;
+      background-color: rgba(138, 36, 228, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 10px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #ffeb3b;
+      margin: 0;
+      font-size: 1.8rem;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 900px;
+      margin: auto;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 2px solid black;
+      border-radius: 1.25rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.6s ease;
+    }
+    .container.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    h2 {
+      color: #8a24e4;
+      text-align: center;
+      font-size: 1.4rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 1rem;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #8a24e4;
+      color: white;
+      font-size: 1rem;
+    }
+
+    tr:nth-child(even) { background-color: #f9f9f9; }
+
+    .btn {
+      background: #4caf50;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.3s;
+      font-size: 0.85rem;
+      margin: 2px;
+    }
+    .btn:hover { background: #45a049; }
+
+    .btn-danger { background: #f44336; }
+    .btn-danger:hover { background: #d32f2f; }
+
+    .nav-btn {
+      display: block;
+      margin: 20px auto;
+      background: transparent;
+      border-radius: 1.5rem;
+      border: 2px solid blueviolet;
+      height: 40px;
+      width: 150px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+    }
+    .nav-btn:hover { border-color: red; transform: scale(1.05); }
+
+    /* Toast Message */
+    #toast {
+      visibility: hidden;
+      min-width: 250px;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 12px;
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      font-size: 1rem;
+    }
+    #toast.show {
+      visibility: visible;
+      animation: fadein 0.5s, fadeout 0.5s 2s;
+    }
+    @keyframes fadein {
+      from {bottom: 10px; opacity: 0;}
+      to {bottom: 30px; opacity: 1;}
+    }
+    @keyframes fadeout {
+      from {bottom: 30px; opacity: 1;}
+      to {bottom: 10px; opacity: 0;}
+    }
+
+    /* Loader */
+    #loader {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(255,255,255,0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 2000;
+    }
+    .spinner {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #8a24e4;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg);}
+      100% { transform: rotate(360deg);}
+    }
+
+    /* ✅ Center the QR code */
+    .qr-section {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+    }
+    .qr-section canvas {
+      margin-top: 10px;
+      width: 220px !important;
+      height: 220px !important;
+    }
+
+    @media (max-width: 768px) {
+      table, thead, tbody, th, td, tr { display: block; }
+      table thead { display: none; }
+      table tr {
+        margin-bottom: 12px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        background: #fff;
+        padding: 10px;
+      }
+      table td {
+        text-align: left;
+        padding: 8px;
+        display: flex;
+        justify-content: space-between;
+      }
+      table td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        color: #8a24e4;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>OrderEasy - Digital Menu</h1>
+  </header>
+
+  <!-- Loader -->
+  <div id="loader">
+    <div class="spinner"></div>
+    <p style="margin-top:15px; font-weight:bold; color:#8a24e4;">Loading Menu...</p>
+  </div>
+
+  <!-- Menu Page -->
+  <div class="container" id="menuPage">
+    <h2>Regular Menu</h2>
+    <table>
+      <thead>
+        <tr><th>Dish</th><th>Price (₹)</th><th>Action</th></tr>
+      </thead>
+      <tbody id="menuTable"></tbody>
+    </table>
+
+    <h2>Extra Items</h2>
+    <table>
+      <thead>
+        <tr><th>Dish</th><th>Price (₹)</th><th>Action</th></tr>
+      </thead>
+      <tbody id="extraItemsTable"></tbody>
+      <tfoot>
+        <tr>
+          <td><input type="text" id="newDish" placeholder="Dish Name"></td>
+          <td><input type="number" id="newPrice" placeholder="Price"></td>
+          <td><button class="btn" onclick="addCustomDish()">Add Item</button></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <button class="btn btn-danger" style="display:block; margin:15px auto;" onclick="clearCart()">Clear Cart</button>
+    <button class="nav-btn" onclick="goToCart()">Go to Cart</button>
+  </div>
+
+  <!-- Cart Page -->
+  <div class="container" id="cartPage" style="display:none;">
+    <h2>Your Cart</h2>
+    <div id="cartItems"></div>
+    <div class="cart-summary" id="cartSummary"></div>
+
+    <!-- ✅ Place Order Button -->
+    <div style="text-align:center; margin:20px 0;">
+      <button class="btn" onclick="placeOrder()">Place Order</button>
+    </div>
+
+    <!-- ✅ Centered QR Code -->
+    <div class="qr-section">
+      <h2>Scan Your Order</h2>
+      <canvas id="qrCode"></canvas>
+    </div>
+
+    <button class="nav-btn" onclick="goToMenu()">Back to Menu</button>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast">Item added! Go to Cart when ready.</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script>
+    const menu = [
+      { name: "Veg Burger", price: 120 },
+      { name: "Chicken Biryani", price: 250 },
+      { name: "Paneer Tikka", price: 180 },
+      { name: "Cold Coffee", price: 90 },
+      { name: "French Fries", price: 100 },
+      { name: "Pizza Margherita", price: 220 }
+    ];
+    const extraItems = [];
+    const cart = {};
+
+    function renderMenu() {
+      const menuTable = document.getElementById("menuTable");
+      menuTable.innerHTML = "";
+      menu.forEach((item, index) => {
+        menuTable.innerHTML += `
+          <tr>
+            <td>${item.name}</td>
+            <td>₹${item.price}</td>
+            <td>
+              <button class="btn" onclick="addToCart(${index}, 'menu')">+</button>
+              <button class="btn" onclick="removeFromCart('menu_${index}')">-</button>
+              <button class="btn btn-danger" onclick="clearItem('menu_${index}')">Clear</button>
+              <span id="qty_menu_${index}">0</span>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderExtraItems() {
+      const extraTable = document.getElementById("extraItemsTable");
+      extraTable.innerHTML = "";
+      extraItems.forEach((item, index) => {
+        extraTable.innerHTML += `
+          <tr>
+            <td>${item.name}</td>
+            <td>₹${item.price}</td>
+            <td>
+              <button class="btn" onclick="addToCart(${index}, 'extra')">+</button>
+              <button class="btn" onclick="removeFromCart('extra_${index}')">-</button>
+              <button class="btn btn-danger" onclick="clearItem('extra_${index}')">Clear</button>
+              <span id="qty_extra_${index}">0</span>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function addToCart(index, type) {
+      const key = type + "_" + index;
+      cart[key] = (cart[key] || 0) + 1;
+      document.getElementById("qty_" + key).innerText = cart[key];
+      showToastMessage("Item added! Go to Cart when ready.");
+    }
+
+    function removeFromCart(key) {
+      if (cart[key]) {
+        cart[key]--;
+        if (cart[key] <= 0) {
+          delete cart[key];
+          document.getElementById("qty_" + key).innerText = 0;
+        } else {
+          document.getElementById("qty_" + key).innerText = cart[key];
+        }
+      }
+    }
+
+    function clearItem(key) {
+      if (cart[key]) {
+        delete cart[key];
+        document.getElementById("qty_" + key).innerText = 0;
+      }
+    }
+
+    function clearCart() {
+      for (let key in cart) {
+        delete cart[key];
+        const qtyEl = document.getElementById("qty_" + key);
+        if (qtyEl) qtyEl.innerText = 0;
+      }
+    }
+
+    function addCustomDish() {
+      const name = document.getElementById("newDish").value.trim();
+      const price = parseFloat(document.getElementById("newPrice").value);
+      if (name && !isNaN(price) && price > 0) {
+        extraItems.push({ name, price });
+        renderExtraItems();
+        document.getElementById("newDish").value = "";
+        document.getElementById("newPrice").value = "";
+      } else {
+        alert("Please enter valid dish name and price.");
+      }
+    }
+
+    function renderCart() {
+      const cartItemsDiv = document.getElementById("cartItems");
+      const cartSummary = document.getElementById("cartSummary");
+
+      cartItemsDiv.innerHTML = "";
+      let total = 0;
+      let itemCount = 0;
+
+      for (let key in cart) {
+        const [type, idx] = key.split("_");
+        const item = type === "menu" ? menu[idx] : extraItems[idx];
+        const qty = cart[key];
+        const subtotal = item.price * qty;
+        total += subtotal;
+        itemCount += qty;
+        cartItemsDiv.innerHTML += `<div class="cart-item"><span>${item.name} x ${qty} = ₹${subtotal}</span></div>`;
+      }
+
+      cartSummary.innerText = itemCount > 0
+        ? `Total Items: ${itemCount} | Total Price: ₹${total}`
+        : "Your cart is empty.";
+
+      generateQR();
+    }
+
+    function generateQR() {
+      const cartItems = [];
+      for (let key in cart) {
+        const [type, idx] = key.split("_");
+        const item = type === "menu" ? menu[idx] : extraItems[idx];
+        cartItems.push({ name: item.name, price: item.price, qty: cart[key] });
+      }
+      const cartData = JSON.stringify(cartItems, null, 2);
+      QRCode.toCanvas(document.getElementById("qrCode"), cartData, function (error) {
+        if (error) console.error(error);
+      });
+    }
+
+    function goToCart() {
+      animatePage("menuPage", "cartPage");
+      renderCart();
+    }
+
+    function goToMenu() {
+      animatePage("cartPage", "menuPage");
+    }
+
+    function animatePage(hideId, showId) {
+      const hidePage = document.getElementById(hideId);
+      const showPage = document.getElementById(showId);
+      hidePage.classList.remove("show");
+      setTimeout(() => {
+        hidePage.style.display = "none";
+        showPage.style.display = "block";
+        setTimeout(() => showPage.classList.add("show"), 50);
+      }, 500);
+    }
+
+    function showToastMessage(message) {
+      const toast = document.getElementById("toast");
+      toast.innerText = message;
+      toast.className = "show";
+      setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 2500);
+    }
+
+    function placeOrder() {
+      if (Object.keys(cart).length === 0) {
+        alert("Your cart is empty. Please add items before placing an order.");
+        return;
+      }
+      showToastMessage("Order Placed!");
+      clearCart();
+      renderCart();
+    }
+
+    // Loader
+    window.onload = function() {
+      setTimeout(() => {
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("menuPage").classList.add("show");
+      }, 1200);
+    };
+
+    renderMenu();
+    renderExtraItems();
+  </script>
+</body>
+</html>
