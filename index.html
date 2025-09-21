@@ -246,9 +246,9 @@
     <div class="cart-summary" id="cartSummary"></div>
 
     <!-- ✅ Place Order Button -->
-    <div style="text-align:center; margin:20px 0;">
+    <!-- <div style="text-align:center; margin:20px 0;">
       <button class="btn" onclick="placeOrder()">Place Order</button>
-    </div>
+    </div> -->
 
     <!-- ✅ Centered QR Code -->
     <div class="qr-section">
@@ -386,17 +386,24 @@
     }
 
     function generateQR() {
-      const cartItems = [];
-      for (let key in cart) {
-        const [type, idx] = key.split("_");
-        const item = type === "menu" ? menu[idx] : extraItems[idx];
-        cartItems.push({ name: item.name, price: item.price, qty: cart[key] });
-      }
-      const cartData = JSON.stringify(cartItems, null, 2);
-      QRCode.toCanvas(document.getElementById("qrCode"), cartData, function (error) {
-        if (error) console.error(error);
-      });
-    }
+  const cartItems = [];
+  for (let key in cart) {
+    const [type, idx] = key.split("_");
+    const item = type === "menu" ? menu[idx] : extraItems[idx];
+    cartItems.push({ name: item.name, price: item.price, qty: cart[key] });
+  }
+
+  if (cartItems.length === 0) return;
+
+  // Encode as Base64 to make it safe for URL
+  const encodedData = btoa(JSON.stringify(cartItems));
+  const url = window.location.origin + "/OrderEasy/order.html?data=" + encodedData;
+
+  QRCode.toCanvas(document.getElementById("qrCode"), url, function (error) {
+    if (error) console.error(error);
+  });
+}
+
 
     function goToCart() {
       animatePage("menuPage", "cartPage");
